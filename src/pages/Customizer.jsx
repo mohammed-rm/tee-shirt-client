@@ -6,7 +6,8 @@ import {DecalTypes, EditorTabs, FilterTabs} from "../config/constants.js";
 import {fadeAnimation, slideAnimation} from "../config/motion.js";
 import {AIPicker, ColorPicker, CustomButton, FilePicker, Tab} from "../components";
 import {downloadCanvasToImage, reader} from "../config/helpers.js";
-import {download} from "../assets/index.js";
+import {toast, ToastContainer} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Customizer = () => {
     const snap = useSnapshot(state);
@@ -40,6 +41,9 @@ const Customizer = () => {
                 break
             case "download":
                 downloadCanvasToImage();
+                toast("Your image has been downloaded successfully!", {
+                    theme: "dark", type: "default", autoClose: 3000,
+                })
                 break
             default:
                 state.isLogoTexture = true
@@ -156,8 +160,8 @@ const Customizer = () => {
                     }}
                 />))}
             </motion.div>
+            <ToastContainer/>
         </>)}
-
     </AnimatePresence>);
 };
 
