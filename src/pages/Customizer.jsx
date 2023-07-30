@@ -17,7 +17,7 @@ const Customizer = () => {
 
     const [activeEditorTab, setActiveEditorTab] = useState("");
     const [activeFilterTab, setActiveFilterTab] = useState({
-        logoShirt: true, stylishShirt: false,
+        logoShirt: true, stylishShirt: false, download: false,
     });
 
     const handleDecals = (type, result) => {
@@ -38,9 +38,13 @@ const Customizer = () => {
             case "stylishShirt":
                 state.isFullTexture = !activeFilterTab[tabName]
                 break
+            case "download":
+                downloadCanvasToImage();
+                break
             default:
                 state.isLogoTexture = true
                 state.isFullTexture = false
+                break
         }
 
         // updating the state after setting the active tab
@@ -146,18 +150,11 @@ const Customizer = () => {
                     key={tab.name}
                     tab={tab}
                     isFilterTab
-                    isActive={activeFilterTab[tab.name]}
+                    isActive={tab.name !== "download" ? activeFilterTab[tab.name] : false}
                     handleClick={() => {
                         handleActiveFilterTab(tab.name)
                     }}
                 />))}
-                <Tab
-                    key="download"
-                    tab={{
-                        name: "download", icon: download,
-                    }}
-                    handleClick={downloadCanvasToImage}
-                />
             </motion.div>
         </>)}
 
