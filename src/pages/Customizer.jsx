@@ -5,7 +5,8 @@ import state from "../store";
 import {DecalTypes, EditorTabs, FilterTabs} from "../config/constants.js";
 import {fadeAnimation, slideAnimation} from "../config/motion.js";
 import {AIPicker, ColorPicker, CustomButton, FilePicker, Tab} from "../components";
-import {reader} from "../config/helpers.js";
+import {downloadCanvasToImage, reader} from "../config/helpers.js";
+import {download} from "../assets/index.js";
 
 const Customizer = () => {
     const snap = useSnapshot(state);
@@ -150,6 +151,13 @@ const Customizer = () => {
                         handleActiveFilterTab(tab.name)
                     }}
                 />))}
+                <Tab
+                    key="download"
+                    tab={{
+                        name: "download", icon: download,
+                    }}
+                    handleClick={downloadCanvasToImage}
+                />
             </motion.div>
         </>)}
 
