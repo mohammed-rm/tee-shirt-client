@@ -1,13 +1,111 @@
-import React from "react";
+import React, {useState} from "react";
 import {AnimatePresence, motion} from "framer-motion";
 import {useSnapshot} from "valtio";
 import state from "../store";
-import {EditorTabs, FilterTabs} from "../config/constants.js";
+import {DecalTypes, EditorTabs, FilterTabs} from "../config/constants.js";
 import {fadeAnimation, slideAnimation} from "../config/motion.js";
-import {CustomButton, Tab} from "../components";
+import {AIPicker, ColorPicker, CustomButton, FilePicker, Tab} from "../components";
+import {reader} from "../config/helpers.js";
 
 const Customizer = () => {
     const snap = useSnapshot(state);
+
+    const [generatingImg, setGeneratingImg] = useState(false);
+    const [file, setFile] = useState("");
+    const [prompt, setPrompt] = useState("");
+
+    const [activeEditorTab, setActiveEditorTab] = useState("");
+    const [activeFilterTab, setActiveFilterTab] = useState({
+        logoShirt: true, stylishShirt: false,
+    });
+
+    const handleDecals = (type, result) => {
+        const decalType = DecalTypes[type];
+
+        state[decalType.stateProperty] = result;
+
+        if (!activeFilterTab[decalType.filterTab]) {
+            handleActiveFilterTab(decalType.filterTab)
+        }
+    }
+
+    const handleActiveFilterTab = (tabName) => {
+        switch (tabName) {
+            case "logoShirt":
+                state.isLogoTexture = !activeFilterTab[tabName]
+                break
+            case "stylishShirt":
+                state.isFullTexture = !activeFilterTab[tabName]
+                break
+            default:
+                state.isLogoTexture = true
+                state.isFullTexture = false
+        }
+
+        // updating the state after setting the active tab
+        setActiveFilterTab((prevState) => {
+            return {
+                ...prevState, [tabName]: !prevState[tabName],
+            }
+        })
+    }
+
+    const readFile = (type) => {
+        reader(file)
+            .then((result) => {
+                handleDecals(type, result);
+                setActiveEditorTab("");
+            })
+    }
+
+    const handleSubmit = async (type) => {
+        if (!prompt) return alert("Please enter a prompt!");
+
+        try {
+            setGeneratingImg(true);
+
+            const response = await fetch("http://localhost:8000/api/v1/dalle", {
+                method: "POST", headers: {
+                    "Content-Type": "application/json",
+                }, body: JSON.stringify({
+                    prompt,
+                }),
+            });
+
+            const data = await response.json();
+
+            handleDecals(type, `data:image/png;base64,${data.photo}`)
+
+        } catch (error) {
+            alert("Something went wrong!" + error);
+        } finally {
+            setGeneratingImg(false);
+            setActiveEditorTab("");
+        }
+    }
+
+    const generateTabContent = () => {
+        switch (activeEditorTab) {
+            case "colorpicker":
+                return <ColorPicker/>;
+            case "filepicker":
+                return <FilePicker
+                    file={file}
+                    setFile={setFile}
+                    readFile={readFile}
+                />;
+            case "aipicker":
+                return <AIPicker
+                    prompt={prompt}
+                    setPrompt={setPrompt}
+                    generatingImg={generatingImg}
+                    handleSubmit={handleSubmit}
+                />;
+            default:
+                return null;
+        }
+    }
+
     return (<AnimatePresence>
         {!snap.intro && (<>
             <motion.div
@@ -21,8 +119,10 @@ const Customizer = () => {
                             key={tab.name}
                             tab={tab}
                             handleClick={() => {
+                                setActiveEditorTab(tab.name)
                             }}
                         />))}
+                        {generateTabContent()}
                     </div>
                 </div>
             </motion.div>
@@ -45,8 +145,9 @@ const Customizer = () => {
                     key={tab.name}
                     tab={tab}
                     isFilterTab
-                    isActive=""
+                    isActive={activeFilterTab[tab.name]}
                     handleClick={() => {
+                        handleActiveFilterTab(tab.name)
                     }}
                 />))}
             </motion.div>
